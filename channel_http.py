@@ -55,9 +55,16 @@ class CanarytokenPage(resource.Resource, InputChannel):
                 canarydrop._drop['hit_time'] = datetime.datetime.utcnow().strftime("%s.%f")
             useragent = request.getHeader('User-Agent')
             src_ip    = request.getHeader('x-forwarded-for')
+            src_port  = request.environ.get('REMOTE_PORT')
             #location and refere are for cloned sites
             location  = request.args.get('l', [None])[0]
             referer   = request.args.get('r', [None])[0]
+            log.info(src_ip)
+            log.info(src_port)
+            log.info(useragent)
+            log.info(location)
+            log.info(referer)
+
             self.dispatch(canarydrop=canarydrop, src_ip=src_ip,
                           useragent=useragent, location=location,
                           referer=referer)
