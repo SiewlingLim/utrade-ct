@@ -65,7 +65,6 @@ class CanarytokenPage(resource.Resource, InputChannel):
             #log.info(request.getRemotePort())
             #log.info(request.getLocalPort())
             #log.info(request.getServerPort())
-            log.info(request.getHeaders())
 
             self.dispatch(canarydrop=canarydrop, src_ip=src_ip,
                           useragent=useragent, location=location,
