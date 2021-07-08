@@ -58,13 +58,14 @@ class CanarytokenPage(resource.Resource, InputChannel):
             #location and refere are for cloned sites
             location  = request.args.get('l', [None])[0]
             referer   = request.args.get('r', [None])[0]
-            log.info(src_ip)
-            log.info(useragent)
-            log.info(location)
-            log.info(referer)
+            #log.info(src_ip)
+            #log.info(useragent)
+            #log.info(location)
+            #log.info(referer)
             #log.info(request.getRemotePort())
             #log.info(request.getLocalPort())
             #log.info(request.getServerPort())
+            log.info(request.getHeaders())
 
             self.dispatch(canarydrop=canarydrop, src_ip=src_ip,
                           useragent=useragent, location=location,
