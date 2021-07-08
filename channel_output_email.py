@@ -207,10 +207,11 @@ class EmailOutputChannel(OutputChannel):
             if settings.DEBUG:
                 pprint.pprint(message)
             else:
-                server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT)
+                server = smtplib.SMTP_SSL(settings.SMTP_SERVER, settings.SMTP_PORT)
                 server.ehlo()
-                server.starttls()
-                server.ehlo()
+                # siewling edited
+                #server.starttls()
+                #server.ehlo()
                 server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
                 text = smtpmsg.as_string()
                 server.sendmail(fromaddr, toaddr, text)
