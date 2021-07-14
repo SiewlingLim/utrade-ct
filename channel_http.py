@@ -59,7 +59,7 @@ class CanarytokenPage(resource.Resource, InputChannel):
             location  = request.args.get('l', [None])[0]
             referer   = request.args.get('r', [None])[0]
             xx = {'Request Data': {k:v for k,v in request.args.iteritems() }}
-            log.info(str(xx)
+            log.info(str(xx))
             #log.info(useragent)
             #log.info(location)
             #log.info(referer)
