@@ -206,7 +206,7 @@ class CanarytokenPage(resource.Resource, InputChannel):
         if kwargs.has_key('src_ip') and kwargs['src_ip']:
             additional_report += 'Source IP: {ip}'.format(ip=kwargs['src_ip'])
         if kwargs.has_key('src_port') and kwargs['src_port']:
-            additional_report += 'Source Port: {ip_p}'.format(ip_p=kwargs['src_port'])
+            additional_report += '\nSource Port: {ip_p}'.format(ip_p=kwargs['src_port'])
         if kwargs.has_key('useragent') and kwargs['useragent']:
             additional_report += '\nUser-agent: {useragent}'.format(useragent=kwargs['useragent'])
         if kwargs.has_key('location') and kwargs['location']:
