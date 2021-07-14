@@ -191,7 +191,7 @@ class CanarytokenPage(resource.Resource, InputChannel):
             return self.render_GET(request)
 
     def format_additional_data(self, **kwargs):
-        log.info(kwargs)
+        #log.info(kwargs)
         additional_report = ''
         if kwargs.has_key('src_ip') and kwargs['src_ip']:
             additional_report += 'Source IP: {ip}'.format(ip=kwargs['src_ip'])
