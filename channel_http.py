@@ -65,6 +65,8 @@ class CanarytokenPage(resource.Resource, InputChannel):
                 print v
             print 'print all headers'
             print str(request.getAllHeaders())
+            print 'print all raw headers'
+            print str(request.requestHeaders.getAllRawHeaders())
             #log.info(useragent)
             #log.info(location)
             #log.info(referer)
