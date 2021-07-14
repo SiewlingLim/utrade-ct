@@ -54,12 +54,12 @@ class CanarytokenPage(resource.Resource, InputChannel):
             else:
                 canarydrop._drop['hit_time'] = datetime.datetime.utcnow().strftime("%s.%f")
             useragent = request.getHeader('User-Agent')
-            #src_ip    = request.getHeader('x-forwarded-for')
-            src_ip    = '00.00.00'
+            src_ip    = request.getHeader('x-forwarded-for')
             #location and refere are for cloned sites
             location  = request.args.get('l', [None])[0]
             referer   = request.args.get('r', [None])[0]
-            #log.info(src_ip)
+            xx = {'Request Data': {k:v for k,v in request.args.iteritems() }}
+            log.info(str(xx)
             #log.info(useragent)
             #log.info(location)
             #log.info(referer)
