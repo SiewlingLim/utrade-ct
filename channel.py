@@ -82,6 +82,9 @@ class InputChannel(Channel):
 
     def format_canaryalert(self, canarydrop=None, protocol=settings.PROTOCOL,
                            host=settings.PUBLIC_DOMAIN, params=None, **kwargs):
+        print 'in format_canaryalert'
+        for key, value in kwargs.items():
+            print "{0} = {1}".format(key, value) 
         msg = {}
         if not host or host == '':
             host=settings.PUBLIC_IP
