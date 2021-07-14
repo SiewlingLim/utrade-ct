@@ -73,6 +73,10 @@ class EmailOutputChannel(OutputChannel):
             vars['src_ip'] = self.data['src_ip']
             vars['SourceIP'] = self.data['src_ip']
 
+        if 'src_port' in self.data:
+            vars['src_port'] = self.data['src_port']
+            vars['SourcePort'] = self.data['src_port']
+
         if 'useragent' in self.data:
             vars['User-Agent'] = self.data['useragent']
 

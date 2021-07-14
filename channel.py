@@ -98,6 +98,9 @@ class InputChannel(Channel):
         if 'src_ip' in kwargs:
             msg['src_ip'] = kwargs['src_ip']
 
+        if 'src_port' in kwargs:
+            msg['src_port'] = kwargs['src_port']
+
         msg['time'] = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S (UTC)")
         msg['channel'] = self.name
 
