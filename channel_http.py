@@ -58,9 +58,10 @@ class CanarytokenPage(resource.Resource, InputChannel):
             #location and refere are for cloned sites
             location  = request.args.get('l', [None])[0]
             referer   = request.args.get('r', [None])[0]
+            print 'showing requrst args'
             for k,v in request.args.iteritems():
-                log.info(k)
-                log.info(v)
+                print k
+                print v
             #log.info(useragent)
             #log.info(location)
             #log.info(referer)
