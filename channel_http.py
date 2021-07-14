@@ -45,6 +45,7 @@ class CanarytokenPage(resource.Resource, InputChannel):
         #  2a. If a custom image is attached to the canarydrop, serve that and stop.
         #  2b. Serve our default 1x1 gif
 
+        print 'in render_GET'
         request.setHeader("Server", "Apache")
         try:
             token = Canarytoken(value=request.path)
@@ -62,6 +63,8 @@ class CanarytokenPage(resource.Resource, InputChannel):
             for k,v in request.args.iteritems():
                 print k
                 print v
+            print 'print all headers'
+            print str(request.getAllHeaders())
             #log.info(useragent)
             #log.info(location)
             #log.info(referer)
@@ -114,6 +117,7 @@ class CanarytokenPage(resource.Resource, InputChannel):
         return self.GIF
 
     def render_POST(self, request):
+        print 'in render_POST'
         try:
             token = Canarytoken(value=request.path)
             canarydrop = Canarydrop(**get_canarydrop(canarytoken=token.value()))
