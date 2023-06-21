@@ -46,7 +46,6 @@ class CanarytokenPage(resource.Resource, InputChannel):
         #  2a. If a custom image is attached to the canarydrop, serve that and stop.
         #  2b. Serve our default 1x1 gif
 
-        print 'in render_GET'
         request.setHeader("Server", "Apache")
         try:
             manage_uris = ['/generate', '/download?', '/history?', '/manage?', '/resources/', '/settings']
@@ -61,7 +60,6 @@ class CanarytokenPage(resource.Resource, InputChannel):
                 canarydrop._drop['hit_time'] = datetime.datetime.utcnow().strftime("%s.%f")
             useragent = request.getHeader('User-Agent')
             src_ip    = request.getHeader('x-forwarded-for')
-            src_port  = request.getHeader('whatever')
             #location and refere are for cloned sites
             location  = request.args.get('l', [None])[0]
             referer   = request.args.get('r', [None])[0]
@@ -70,29 +68,13 @@ class CanarytokenPage(resource.Resource, InputChannel):
                 k.decode(): flatten_singletons([s.decode() for s in v])
                 for k, v in request.requestHeaders.getAllRawHeaders()
             }
-        	request_args = {k: ','.join(v) for k, v in request.args.iteritems()}
-            print 'showing requrst args'
-            for k,v in request.args.iteritems():
-                print k
-                print v
-            #print 'print all headers'
-            #print str(request.getAllHeaders())
-            #print 'print all raw headers'
-            #for k, v in request.requestHeaders.getAllRawHeaders():
-            #    print k
-            #    print v
-            #log.info(useragent)
-            #log.info(location)
-            #log.info(referer)
-            #log.info(request.getRemotePort())
-            #log.info(request.getLocalPort())
-            #log.info(request.getServerPort())
-			if canarydrop['type'] == 'cc':
+            request_args = {k: ','.join(v) for k, v in request.args.iteritems()}
+            if canarydrop['type'] == 'cc':
                 self.dispatch(canarydrop=canarydrop, last4=request.getHeader('Last4'), amount='$'+request.getHeader('Amount'), merchant=request.getHeader('Merchant'))
             else:
-            	self.dispatch(canarydrop=canarydrop, src_ip=src_ip,src_port =src_port,
-                          useragent=useragent, location=location,
-                          referer=referer, request_headers=request_headers,
+                self.dispatch(canarydrop=canarydrop, src_ip=src_ip,
+                            useragent=useragent, location=location,
+                            referer=referer, request_headers=request_headers,
                             request_args=request_args)
 
             if 'redirect_url' in canarydrop._drop and canarydrop._drop['redirect_url']:
@@ -136,7 +118,6 @@ class CanarytokenPage(resource.Resource, InputChannel):
         return self.GIF
 
     def render_POST(self, request):
-        print 'in render_POST'
         try:
             token = Canarytoken(value=request.path)
             canarydrop = Canarydrop(**get_canarydrop(canarytoken=token.value()))
@@ -157,8 +138,8 @@ class CanarytokenPage(resource.Resource, InputChannel):
                 canarydrop._drop['hit_time'] = datetime.datetime.utcnow().strftime("%s.%f")
                 useragent = request.args.get('user_agent', [None])[0]
                 src_ip    = request.args.get('ip', [None])[0]
-				safety_net = request.args.get('safety_net', [None])[0]
-				last_used  = request.args.get('last_used', [None])[0]           
+                safety_net = request.args.get('safety_net', [None])[0]
+                last_used  = request.args.get('last_used', [None])[0]
                 additional_info = {'AWS Key Log Data': {k:v for k,v in request.args.iteritems() if k not in ['user_agent', 'ip']}}
 
                 if safety_net:
@@ -261,19 +242,16 @@ class CanarytokenPage(resource.Resource, InputChannel):
             return self.render_GET(request)
 
     def format_additional_data(self, **kwargs):
-        #log.info(kwargs)
         additional_report = ''
         if kwargs.has_key('src_ip') and kwargs['src_ip']:
             additional_report += 'Source IP: {ip}'.format(ip=kwargs['src_ip'])
-        if kwargs.has_key('src_port') and kwargs['src_port']:
-            additional_report += '\nSource Port: {ip_p}'.format(ip_p=kwargs['src_port'])
         if kwargs.has_key('useragent') and kwargs['useragent']:
             additional_report += '\nUser-agent: {useragent}'.format(useragent=kwargs['useragent'])
         if kwargs.has_key('location') and kwargs['location']:
             additional_report += '\nCloned site is at: {location}'.format(location=kwargs['location'])
         if kwargs.has_key('referer') and kwargs['referer']:
             additional_report += '\nReferring site: {referer}'.format(referer=kwargs['referer'])
-		if kwargs.has_key('request_headers') and kwargs['request_headers']:
+        if kwargs.has_key('request_headers') and kwargs['request_headers']:
             additional_report += '\nAdditional header info: {0}'.format(kwargs['request_headers'])
         return additional_report
 
