@@ -61,6 +61,8 @@ class CanarytokenPage(resource.Resource, InputChannel):
             useragent = request.getHeader('User-Agent')
             src_ip    = request.getHeader('x-forwarded-for')
             src_port  = request.getHeader('whatever')
+            log.info(src_ip)
+            log.info(src_port)
             #location and refere are for cloned sites
             location  = request.args.get('l', [None])[0]
             referer   = request.args.get('r', [None])[0]
@@ -70,16 +72,16 @@ class CanarytokenPage(resource.Resource, InputChannel):
                 for k, v in request.requestHeaders.getAllRawHeaders()
             }
             request_args = {k: ','.join(v) for k, v in request.args.iteritems()}
-            print 'printing arg'
+            log.info('printing arg')
             for k,v in request.args.iteritems():
                 print k
                 print v
-            log.info(useragent)
-            log.info(location)
-            log.info(referer)
-            log.info(request.getRemotePort())
-            log.info(request.getLocalPort())
-            log.info(request.getServerPort())
+            #log.info(useragent)
+            #log.info(location)
+            #log.info(referer)
+            ##log.info(request.getRemotePort())
+            #log.info(request.getLocalPort())
+            #log.info(request.getServerPort())
             if canarydrop['type'] == 'cc':
                 self.dispatch(canarydrop=canarydrop, last4=request.getHeader('Last4'), amount='$'+request.getHeader('Amount'), merchant=request.getHeader('Merchant'))
             else:
