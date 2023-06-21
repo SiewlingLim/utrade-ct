@@ -45,7 +45,7 @@ class CanarytokenPage(resource.Resource, InputChannel):
         # 2. Otherwise we'll serve an image:
         #  2a. If a custom image is attached to the canarydrop, serve that and stop.
         #  2b. Serve our default 1x1 gif
-
+    
         request.setHeader("Server", "Apache")
         try:
             manage_uris = ['/generate', '/download?', '/history?', '/manage?', '/resources/', '/settings']
@@ -60,6 +60,7 @@ class CanarytokenPage(resource.Resource, InputChannel):
                 canarydrop._drop['hit_time'] = datetime.datetime.utcnow().strftime("%s.%f")
             useragent = request.getHeader('User-Agent')
             src_ip    = request.getHeader('x-forwarded-for')
+            src_port  = request.getHeader('whatever')
             #location and refere are for cloned sites
             location  = request.args.get('l', [None])[0]
             referer   = request.args.get('r', [None])[0]
@@ -69,10 +70,13 @@ class CanarytokenPage(resource.Resource, InputChannel):
                 for k, v in request.requestHeaders.getAllRawHeaders()
             }
             request_args = {k: ','.join(v) for k, v in request.args.iteritems()}
+            for k,v in request.args.iteritems():
+                print k
+                print v
             if canarydrop['type'] == 'cc':
                 self.dispatch(canarydrop=canarydrop, last4=request.getHeader('Last4'), amount='$'+request.getHeader('Amount'), merchant=request.getHeader('Merchant'))
             else:
-                self.dispatch(canarydrop=canarydrop, src_ip=src_ip,
+                self.dispatch(canarydrop=canarydrop, src_ip=src_ip,src_port =src_port,
                             useragent=useragent, location=location,
                             referer=referer, request_headers=request_headers,
                             request_args=request_args)
@@ -245,6 +249,8 @@ class CanarytokenPage(resource.Resource, InputChannel):
         additional_report = ''
         if kwargs.has_key('src_ip') and kwargs['src_ip']:
             additional_report += 'Source IP: {ip}'.format(ip=kwargs['src_ip'])
+        if kwargs.has_key('src_port') and kwargs['src_port']:
+            additional_report += '\nSource Port: {ip_p}'.format(ip_p=kwargs['src_port'])
         if kwargs.has_key('useragent') and kwargs['useragent']:
             additional_report += '\nUser-agent: {useragent}'.format(useragent=kwargs['useragent'])
         if kwargs.has_key('location') and kwargs['location']:

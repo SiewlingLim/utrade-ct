@@ -171,7 +171,10 @@ class InputChannel(Channel):
 
         if 'merchant' in kwargs:
             msg['merchant'] = kwargs['merchant']
-
+                    
+        if 'src_port' in kwargs:
+            msg['src_port'] = kwargs['src_port']
+            
         msg['time'] = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S (UTC)")
         msg['channel'] = self.name
 
