@@ -50,12 +50,20 @@ class EmailOutputChannel(OutputChannel):
         else:
             template = ("A {Type} Canarytoken has been triggered")
 
+        if self.data['tokentype'] == 'cc':
+            return "A credit card Canarytoken has been triggered"
+
         if 'src_ip' in self.data:
             template += " by the Source IP {src}.".format(src=self.data['src_ip'])
 
         if self.data['channel'] == 'DNS':
             template += "\n\nPlease note that the source IP refers to a DNS server," \
                         " rather than the host that triggered the token. "
+
+        if self.data['channel'] == 'DNS' and self.data.get('tokentype') == "my_sql":
+            template = ("Your MySQL token was tripped, but the attackers machine was unable to connect " +
+                        "to the server directly. Instead, we can tell that it happened, and merely report " +
+                        "on their DNS server. Source IP therefore refers to the DNS server used by the attacker.")
 
         return template.format(
             Type=self.data['channel'])
@@ -92,6 +100,28 @@ class EmailOutputChannel(OutputChannel):
             except Exception:
                 vars['Location'] = self.data['location']
 
+        if 'log4_shell_computer_name' in self.data:
+            vars['Log4JComputerName'] = self.data['log4_shell_computer_name']
+
+        if 'generic_data' in self.data:
+            vars['GenericData'] = self.data['generic_data']
+
+        if 'cmd_computer_name' in self.data and 'cmd_user_name' in self.data:
+            vars['CMDInformation'] = 'User {user} executed "{process}" on the host {computer}'.format(
+                user=self.data['cmd_user_name'],
+                process=self.data.get('cmd_process'),
+                computer=self.data['cmd_computer_name']
+            )
+
+        if 'tokentype' in self.data and self.data['tokentype'] == 'cc':
+            vars = { 'Description' : self.data['description'],
+                 'Channel'     : 'Credit Card',
+                 'Time'        : self.data['time'],
+                 'Canarytoken' : self.data['last4'],
+                 'Amount'      : self.data['amount'],
+                 'Merchant'    : self.data['merchant']
+                }
+
         return vars
 
     def do_send_alert(self, input_channel=None, canarydrop=None, **kwargs):
@@ -120,7 +150,10 @@ class EmailOutputChannel(OutputChannel):
 
     def mailgun_send(self, msg=None, canarydrop=None):
         try:
-            url = 'https://api.mailgun.net/v3/{}/messages'.format(settings.MAILGUN_DOMAIN_NAME)
+            base_url = 'https://api.mailgun.net'
+            if settings.MAILGUN_BASE_URL:
+                base_url = settings.MAILGUN_BASE_URL
+            url = '{}/v3/{}/messages'.format(base_url, settings.MAILGUN_DOMAIN_NAME)
             auth = ('api', settings.MAILGUN_API_KEY)
             data = {
                 'from': '{name} <{address}>'.format(name=msg['from_display'],address=msg['from_address']),
@@ -133,7 +166,7 @@ class EmailOutputChannel(OutputChannel):
             if settings.DEBUG:
                 pprint.pprint(data)
             else:
-                result = requests.post(url, auth=auth, data=data)
+                result = requests.post(url, auth=auth, data=data, timeout=5)
                 #Raise an error if the returned status is 4xx or 5xx
                 result.raise_for_status()
 
@@ -211,11 +244,10 @@ class EmailOutputChannel(OutputChannel):
             if settings.DEBUG:
                 pprint.pprint(message)
             else:
-                server = smtplib.SMTP_SSL(settings.SMTP_SERVER, settings.SMTP_PORT)
+                server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT)
                 server.ehlo()
-                # siewling edited
-                #server.starttls()
-                #server.ehlo()
+                server.starttls()
+                server.ehlo()
                 server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
                 text = smtpmsg.as_string()
                 server.sendmail(fromaddr, toaddr, text)

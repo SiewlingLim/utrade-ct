@@ -55,7 +55,7 @@ class InputChannel(Channel):
 
         return payload
 
-    def format_slack_canaryalert(self,canarydrop=None, protocol=settings.PROTOCOL,
+    def format_slack_canaryalert(self, canarydrop, protocol=settings.PROTOCOL,
                                    host=settings.PUBLIC_DOMAIN, **kwargs):
         payload = {}
         fields = []
@@ -80,6 +80,71 @@ class InputChannel(Channel):
         payload['attachments'] = [attachment]
         return payload
 
+    def format_googlechat_canaryalert(self, canarydrop, protocol=settings.PROTOCOL,
+                                   host=settings.PUBLIC_DOMAIN, **kwargs):
+        payload = {
+            "cardsV2": [
+                {
+                    "cardId": "unique-card-id",
+                    "card": {
+                        "header": {
+                            "title": "Canarytoken Triggered",
+                            "imageUrl": "https://s3-eu-west-1.amazonaws.com/email-images.canary.tools/canary-logo-round.png",
+                            "imageType": "CIRCLE",
+                            "imageAltText": "Thinkst Canary",
+                        },
+                        "sections": [],
+                    },
+                }
+            ],
+        }
+        if not host or host == '':
+            host=settings.PUBLIC_IP
+
+        decorated_text = lambda label, text: {
+            "decoratedText": {
+                "topLabel": label,
+                "text": text,
+            }
+        }
+
+        section = lambda header: {
+            "header": header,
+            "collapsible": False,
+            "widgets": [],
+        }
+
+        payload["cardsV2"][0]["card"]["sections"].append(
+            section(header='Alert Details')
+        )
+        for (label, text) in [
+            ('Channel', self.name),
+            ('Time', datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S (UTC)")),
+            ('Canarytoken', canarydrop.canarytoken.value()),
+            ('Token Reminder', canarydrop.memo),
+            ('Manage URL', '<a href="{protocol}://{host}/manage?token={token}&auth={auth}">{protocol}://{host}/manage?token={token}&auth={auth}</a>' \
+                                .format(protocol=protocol,
+                                                        host=host,
+                                                        token=canarydrop['canarytoken'],
+                                                        auth=canarydrop['auth'])),
+        ]:
+            payload["cardsV2"][0]["card"]["sections"][0]["widgets"].append(
+                decorated_text(label=label, text=text)
+            )
+        
+        payload["cardsV2"][0]["card"]["sections"].append(
+            section(header='Additional Details')
+        )
+
+        for (label, text) in kwargs.items():
+            if label and text:
+                message_text = simplejson.dumps(text) if isinstance(text, dict) else '{}'.format(text)
+                payload["cardsV2"][0]["card"]["sections"][1]["widgets"].append(
+                    decorated_text(label=label, text=message_text)
+                )
+
+        return payload
+      
     def format_canaryalert(self, canarydrop=None, protocol=settings.PROTOCOL,
                            host=settings.PUBLIC_DOMAIN, params=None, **kwargs):
         msg = {}
@@ -98,6 +163,15 @@ class InputChannel(Channel):
         if 'src_ip' in kwargs:
             msg['src_ip'] = kwargs['src_ip']
 
+		if 'last4' in kwargs:
+            msg['last4'] = kwargs['last4']
+
+        if 'amount' in kwargs:
+            msg['amount'] = kwargs['amount']
+
+        if 'merchant' in kwargs:
+            msg['merchant'] = kwargs['merchant']
+            
         if 'src_port' in kwargs:
             msg['src_port'] = kwargs['src_port']
 
@@ -110,6 +184,21 @@ class InputChannel(Channel):
 
         if 'src_data' in kwargs and 'aws_keys_event_user_agent' in kwargs['src_data']:
             msg['useragent'] = kwargs['src_data']['aws_keys_event_user_agent']
+        
+        if 'src_data' in kwargs and 'log4_shell_computer_name' in kwargs['src_data']:
+            msg['log4_shell_computer_name'] = kwargs['src_data']['log4_shell_computer_name']
+
+        if 'src_data' in kwargs and 'cmd_computer_name' in kwargs['src_data']:
+            msg['cmd_computer_name'] = kwargs['src_data']['cmd_computer_name']
+
+        if 'src_data' in kwargs and 'generic_data' in kwargs['src_data']:
+            msg['generic_data'] = kwargs['src_data']['generic_data']
+
+        if 'src_data' in kwargs and 'cmd_user_name' in kwargs['src_data']:
+            msg['cmd_user_name'] = kwargs['src_data']['cmd_user_name']
+
+        if 'cmd_process' in canarydrop._drop:
+            msg['cmd_process'] = canarydrop._drop['cmd_process']
 
         if params.get('body_length', 999999999) <= 140:
             msg['body'] = """Canarydrop@{time} via {channel_name}: """\

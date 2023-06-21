@@ -1,3 +1,4 @@
+import re
 import requests
 import datetime
 import simplejson
@@ -11,7 +12,9 @@ from redismanager import db, KEY_CANARYDROP, KEY_CANARY_DOMAINS,\
      KEY_IMGUR_TOKENS, KEY_LINKEDIN_ACCOUNT, KEY_LINKEDIN_ACCOUNTS,\
      KEY_BITCOIN_ACCOUNTS, KEY_BITCOIN_ACCOUNT, KEY_CANARY_NXDOMAINS,\
      KEY_CLONEDSITE_TOKEN, KEY_CLONEDSITE_TOKENS, KEY_CANARY_IP_CACHE, \
-     KEY_CANARY_GOOGLE_API_KEY, KEY_TOR_EXIT_NODES, KEY_WEBHOOK_IDX, KEY_EMAIL_IDX
+     KEY_CANARY_GOOGLE_API_KEY, KEY_TOR_EXIT_NODES, KEY_WEBHOOK_IDX, KEY_EMAIL_IDX, \
+     KEY_EMAIL_BLOCK_LIST, KEY_DOMAIN_BLOCK_LIST, KEY_WIREGUARD_KEYMAP, \
+     KEY_KUBECONFIG_SERVEREP, KEY_KUBECONFIG_CERTS, KEY_KUBECONFIG_HITS
 
 from twisted.logger import Logger
 log = Logger()
@@ -191,7 +194,7 @@ def get_aws_keys(token=None, server=None):
             log.error('Length of the Server Name and token is too long. Will not work on AWS')
             return False
 
-        url = str(settings.CANARY_AWSID_URL)
+        url = str(settings.AWSID_URL)
 
         resp = requests.get('{url}?data={d}'.format(url=url,d=data))
         if not resp:
@@ -207,30 +210,42 @@ def get_aws_keys(token=None, server=None):
         log.error('Error getting aws keys: {err}'.format(err=e))
         return False
 
-def get_slack_api_key(token=None,server=None):
-    if not (token or server) or len(token) == 0 or len(server) == 0:
-        log.error('Empty values passed through to get_slack_api_key function')
+def get_azure_id(token=None, server=None):
+    if not (token or server) or len(token)==0 or len(server)==0:
+        log.error('Empty values passed through to get_azure_id function.')
         return False
     try:
-        if not validate_hostname(server):
+        token_url = str(settings.AZURE_ID_TOKEN_URL)
+        token_auth = str(settings.AZURE_ID_TOKEN_AUTH)
+
+        if token_url == '':
+            log.error('No URL provided for AZURE ID creation')
             return False
 
-        url = str(settings.CANARY_SLACKAPI_URL)
-
-        resp = (requests.get('{url}?token={t}&domain={d}'.format(url=url, t=token, d=server))).json()
-
-        if 'error' in resp:
-            log.error('Error in response for getting slack api key: {}'.format(resp['error']))
+        if token_auth == '':
+            log.error('No AUTH token provided for AZURE ID creation')
             return False
 
-        if not 'slack-api-token' in resp:
-            log.error('Missing slack-api-token in response to getting token')
-            return False
+        url = '{token_url}?code={token_auth}'.format(token_url=token_url, token_auth=token_auth)
+        data = {
+            'token': token,
+            'domain': server
+        }
 
-        return resp['slack-api-token']
+        resp = requests.post(url=url, json=data)
+        if not resp:
+            log.error('Bad response from getting AZURE ID')
+            return False
+        resp_json = resp.json()
+        app_id = resp_json['app_id']
+        cert = resp_json['cert']
+        tenant_id = resp_json['tenant_id']
+        cert_name = resp_json['cert_name']
+        return (app_id, cert, tenant_id, cert_name)
     except Exception as e:
-        log.error('Error getting slack api key: {err}'.format(err=e))
+        log.error('Error getting azure id: {err}'.format(err=e))
         return False
+
 
 
 def validate_hostname(hostname):
@@ -543,8 +558,9 @@ def is_webhook_valid(url):
     if not url or url == '':
         return False
 
-    slack = "https://hooks.slack.com"
-    if (slack in url):
+    slack_hook_base_url = "https://hooks.slack.com"
+    googlechat_hook_base_url = "https://chat.googleapis.com/"
+    if (slack_hook_base_url in url or googlechat_hook_base_url in url):
         payload = {'text': 'Validating new canarytokens webhook'}
     else:
         payload = {"manage_url": "http://example.com/test/url/for/webhook",
@@ -560,7 +576,7 @@ def is_webhook_valid(url):
     try:
         response = requests.post(url,
                                  simplejson.dumps(payload),
-                                 headers={'content-type': 'application/json'},
+                                 headers={'content-type': 'application/json', 'user-agent': 'Canarytokens'},
                                  timeout=10)
         response.raise_for_status()
         return True
@@ -570,6 +586,45 @@ def is_webhook_valid(url):
     except requests.exceptions.RequestException as e:
         log.error('Failed sending test payload to webhook: {url} with error {error}'.format(url=url,error=e))
         return False
+
+def is_valid_email(email):
+    # This validation checks that no disallowed characters are in the section of the email
+    # address before the @
+    #Ripped from https://www.regular-expressions.info/email.html
+    regex = re.compile(r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
+    match = regex.search(email.lower())
+    if not match:
+        return False
+    else:
+        return True
+
+def normalize_email(email):
+    [user, domain] = email.split('@')
+    if domain in ['gmail.com', 'googlemail.com', 'google.com']:
+        delabelled = user.split('+')[0]
+        san_user = delabelled.replace('.', '')
+        return '{}@{}'.format(san_user, domain)
+    else:
+        return email
+
+def block_email(email):
+    san = normalize_email(email)
+    db.sadd(KEY_EMAIL_BLOCK_LIST, san)
+
+def unblock_email(email):
+    san = normalize_email(email)
+    db.srem(KEY_EMAIL_BLOCK_LIST, san)
+
+def block_domain(domain):
+    db.sadd(KEY_DOMAIN_BLOCK_LIST, domain)
+
+def unblock_domain(domain):
+    db.srem(KEY_DOMAIN_BLOCK_LIST, domain)
+
+def is_email_blocked(email):
+    san = normalize_email(email)
+    domain = email.split('@')[1]
+    return db.sismember(KEY_DOMAIN_BLOCK_LIST, domain) or db.sismember(KEY_EMAIL_BLOCK_LIST, san)
 
 def is_tor_relay(ip):
     if not db.exists(KEY_TOR_EXIT_NODES):
@@ -586,3 +641,39 @@ def update_tor_exit_nodes(contents):
 def update_tor_exit_nodes_loop():
     d = getPage('https://check.torproject.org/exit-addresses')
     d.addCallback(update_tor_exit_nodes)
+
+def get_certificate(key, _type=None):
+    certificate = db.hgetall("{}{}".format(KEY_KUBECONFIG_CERTS, key))
+    if certificate is not None and _type is not None:
+        return certificate.get(_type, None)
+
+    return certificate
+
+def save_certificate(key, cert_obj):
+    db.hmset("{}{}".format(KEY_KUBECONFIG_CERTS, key), cert_obj)
+
+def save_kc_endpoint(endpoint):
+    db.set(KEY_KUBECONFIG_SERVEREP, endpoint)
+
+def get_kc_endpoint():
+    return db.get(KEY_KUBECONFIG_SERVEREP)
+
+def save_kc_hit_for_aggregation(key, hits, update=False):
+    hit_key = "{}{}".format(KEY_KUBECONFIG_HITS, key)
+    db.hset(hit_key, 'hits', hits)
+
+    if not update:
+        # typical timeout sent with each kubectl caching discovery request is 32s, and 5 requests are sent as part of each kubectl execution
+        db.expire(hit_key, 5*32)
+
+def get_kc_hits(key):
+    return (db.hgetall("{}{}".format(KEY_KUBECONFIG_HITS, key)), db.pttl("{}{}".format(KEY_KUBECONFIG_HITS, key)))
+
+def wireguard_keymap_add(public_key, canarytoken):
+    db.hset(KEY_WIREGUARD_KEYMAP, public_key, canarytoken)
+
+def wireguard_keymap_del(public_key):
+    db.hdel(KEY_WIREGUARD_KEYMAP, public_key)
+
+def wireguard_keymap_get(public_key):
+    return db.hget(KEY_WIREGUARD_KEYMAP, public_key)

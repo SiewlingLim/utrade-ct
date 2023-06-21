@@ -31,6 +31,20 @@
     <img src="/resources/clippy.svg" alt="Copy to clipboard">
   </button>
 {%- endmacro %}
+
+{% macro textareacopydownload(name, download_fmt, value="")%}
+<textarea id="{{name}}" class="result-data" readonly="">{{value}}
+</textarea>
+<div style="flex-direction: column;margin-left: 0.2rem;" class="btn-group">
+<button class="btn btn-success btn-clipboard tooltip" type="button" data-clipboard-target="#{{name}}" style="margin-bottom: 0.2rem;">
+  <img src="/resources/clippy.svg" alt="Copy to clipboard">
+</button>
+<a class="btn btn-clipboard tooltip file-download" data-fmt="{{download_fmt}}" style="border-radius: 0;">
+  <img src="/resources/download.svg" alt="Download text area">
+</a>
+</div>
+{%- endmacro %}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -47,11 +61,10 @@
     <meta property="og:image:width" content="52">
     <meta property="og:image:height" content="52">
     <meta name="keywords" content="Canary token,Canarytokens,Canary token,Canary tokens,Honeytoken,Honeytokens,Web bug,DNS token,URL token,Thinkst,Thinkst Applied Research">
-    <link rel="icon" href="../../favicon.ico">
+    <link rel="shortcut icon" href="/resources/favicon.ico">
     <link href="/resources/perfect-scrollbar.css" rel="stylesheet">
 
     <title>Canarytokens</title>
-    <link rel="icon" type="image/png" href="/resources/favicon.png">
 
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
@@ -60,7 +73,8 @@
     <link href="https://v4-alpha.getbootstrap.com/examples/narrow-jumbotron/narrow-jumbotron.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/jquery.tooltipster/4.1.8/css/tooltipster.bundle.min.css" integrity="sha256-Qc4lCfqZWYaHF5hgEOFrYzSIX9Rrxk0NPHRac+08QeQ=" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/jquery.tooltipster/4.1.8/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-borderless.min.css" integrity="sha256-ZiBTbkzExWV/DU4+02ZMqXaNu7o0XfNmxTa0+gRbdO0=" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="/resources/styles.min.css?ver=1">
+    <link rel="stylesheet" type="text/css" href="/resources/styles.min.css?ver=9">
+    <link href="https://fonts.cdnfonts.com/css/ocr-a-extended" rel="stylesheet">
     <style>
     .ps__rail-x,
     .ps__rail-y {
@@ -88,10 +102,6 @@
             <img alt="logo" src="/resources/logo.png" class="logo">
           </a>
         </h3>
-        <div style="display:flex; justify-content:space-between">
-          <a href="http://blog.thinkst.com/p/canarytokensorg-quick-free-detection.html" target="_blank">What is this and why should I care?</a>
-          <a style="margin-left: 50px;" href="https://docs.canarytokens.org" target="_blank">Documentation</a>
-        </div>
       </div>
 
       <div class="jumbotron">
@@ -105,22 +115,30 @@
                   <span id="selected_token">Select your token</span>
                   <input name="type" type="hidden">
                 	<ul id="dropdown" class="dropdown">
-                		<li data-type="web"            data-memo-placeholder="URL within Dropbox"><a href="#" class="icon icon-web"><span class="title">Web bug / URL token</span><div class="explanation">Alert when a URL is visited</div></a></li>
-                		<li data-type="dns"            data-memo-placeholder="Hostname in /etc/hosts of server X"><a href="#" class="icon icon-dns"><span class="title">DNS token</span><div class="explanation">Alert when a hostname is requested</div></a></li>
-                    <li data-type="smtp"           data-memo-placeholder="Email address in Events database"><a href="#" class="icon icon-email"><span class="title">Unique email address</span><div class="explanation">Alert when an email is sent to a unique address</div></a></li>
-                		<li data-type="web_image"      data-memo-placeholder="Image embedded in router X's admin interface"><a href="#" class="icon icon-web-image"><span class="title">Custom Image Web bug</span><div class="explanation">Alert when an image you uploaded is viewed</div></a></li>
-                    <li data-type="ms_word"        data-memo-placeholder="Word document placed at U:\Users\Sally\Reports\feb.doc"><a href="#" class="icon icon-word"><span class="title">Microsoft Word Document</span><div class="explanation">Get alerted when a document is opened in Microsoft Word</div></a></li>
-                    <li data-type="adobe_pdf"      data-memo-placeholder="PDF document placed at U:\Users\Sipho\Reports\feb.pdf"><a href="#" class="icon icon-pdf"><span class="title">Acrobat Reader PDF Document</span><div class="explanation">Get alerted when a PDF document is opened in Acrobat Reader</div></a></li>
-                    <li data-type="windows_dir"    data-memo-placeholder="Directory token placed in U:\Users\Sarah\CreditCardReports\"><a href="#" class="icon icon-folder"><span class="title">Windows Folder</span><div class="explanation">Be notified when a Windows Folder is browsed in Windows Explorer</div></a></li>
-                    <li data-type="signed_exe"     data-memo-placeholder="Tokened whoami.exe on web server WEB01"><a href="#" class="icon icon-exe"><span class="title">Custom exe / binary</span><div class="explanation">Fire an alert when an EXE or DLL is executed</div></a></li>
-                    <li data-type="cloned_website" data-memo-placeholder="Cloned website token for https://thinkst.com"><a href="#" class="icon icon-clonedsite"><span class="title">Cloned Website</span><div class="explanation">Trigger an alert when your website is cloned</div></a></li>
-                    <li data-type="sql_server"     data-memo-placeholder="SELET SQL Server token on SQL01/CreditCards"><a href="#" class="icon icon-sqlserver"><span class="title">SQL Server</span><div class="explanation">Get alerted when MS SQL Server databases are accessed</div></a></li>
-                    <li data-type="qr_code"        data-memo-placeholder="QR code underneath Simon's phone batter"><a href="#" class="icon icon-qrcode"><span class="title">QR Code</span><div class="explanation">Generate a QR code for physical tokens</div></a></li>
-                    <li data-type="svn"            data-memo-placeholder="SVN token on REPO01/ourmainrepo"><a href="#" class="icon icon-svn"><span class="title">SVN</span><div class="explanation">Alert when someone checks out an SVN repository</div></a></li>
-                    <li data-type="aws_keys"       data-memo-placeholder="AWS keys placed on Jim's laptop"><a href="#" class="icon icon-aws"><span class="title">AWS keys</span><div class="explanation">Alert when AWS key is used</div></a></li>
-                    <li data-type="fast_redirect"  data-memo-placeholder="URL within Dropbox"><a href="#" class="icon icon-redirect"><span class="title">Fast Redirect</span><div class="explanation">Alert when a URL is visited, User is redirected</div></a></li>
-                    <li data-type="slow_redirect"  data-memo-placeholder="URL within Dropbox"><a href="#" class="icon icon-redirect"><span class="title">Slow Redirect</span><div class="explanation">Alert when a URL is visited, User is redirected (Moar info is grabbed!)</div></a></li>
-                    <li data-type="slack_api"      data-memo-placeholder="Slack API token placed on Will's laptop"><a href="#" class="icon icon-slackapi"><span class="title">Slack API key</span><div class="explanation">Alert when Slack API key is used</div></a></li>
+                    <li id="prevent-default"><input type="search" placeholder="Search token by name Eg. command token" id="search-token"></li>
+                		<li data-type="web"            class="token-item" data-memo-placeholder="URL within Dropbox"><a href="#" class="icon icon-web"><span class="title">Web bug / URL token</span><div class="explanation">Alert when a URL is visited</div></a></li>
+                		<li data-type="dns"            class="token-item" data-memo-placeholder="Hostname in /etc/hosts of server X"><a href="#" class="icon icon-dns"><span class="title">DNS token</span><div class="explanation">Alert when a hostname is requested</div></a></li>
+                    <li data-type="aws_keys"       class="token-item" data-memo-placeholder="AWS keys placed on Jim's laptop"><a href="#" class="icon icon-aws"><span class="title">AWS keys</span><div class="explanation">Alert when AWS key is used</div></a></li>
+                    <li data-type="azure_id"       class="token-item" data-memo-placeholder="Azure Service Principal Login details on Code Sign Server 3"><a href="#" class="icon icon-azure-id"><span class="title">Azure Login Certificate</span><div class="explanation">Azure Service Principal certificate that alerts when used to login with.</div></a></li>
+				            <li data-type="cmd"            class="token-item" data-memo-placeholder="Reg file for detection sensitive command execution"><a href="#" class="icon icon-msreg"><span class="title">Sensitive command token</span><div class="explanation">Alert when a suspicious Windows command is run</div></a></li>
+                    <li data-type="ms_word"        class="token-item" data-memo-placeholder="Word document placed at U:\Users\Sally\Reports\feb.doc"><a href="#" class="icon icon-word"><span class="title">Microsoft Word document</span><div class="explanation">Get alerted when a document is opened in Microsoft Word</div></a></li>
+                    <li data-type="ms_excel"       class="token-item" data-memo-placeholder="Excel document placed at U:\Users\Sally\Reports\feb.xlsx"><a href="#" class="icon icon-excel"><span class="title">Microsoft Excel document</span><div class="explanation">Get alerted when a document is opened in Microsoft Excel</div></a></li>
+                    <li data-type="cc"             class="token-item" data-memo-placeholder="Credit Card placed in payment card database"><a href="#" class="icon icon-cc"><span class="title">Credit Card token (beta)</span><div class="explanation">Get alerted when a transaction is attempted on a credit card</div></a></li>
+                    <li data-type="kubeconfig"     class="token-item" data-memo-placeholder="Kubeconfig token placed on web server WEB01"><a href="#" class="icon icon-kubernetes"><span class="title">Kubeconfig token</span><div class="explanation">Alert when a Kubeconfig is used</div></a></li>
+                    <li data-type="wireguard"      class="token-item" data-memo-placeholder="WireGuard VPN config installed on Siya's phone"><a href="#" class="icon icon-wireguard"><span class="title">WireGuard VPN</span><div class="explanation">Alert when a WireGuard VPN client config is used</div></a></li>
+                    <li data-type="cloned_website" class="token-item" data-memo-placeholder="Cloned website token for https://thinkst.com"><a href="#" class="icon icon-clonedsite"><span class="title">Cloned website</span><div class="explanation">Trigger an alert when your website is cloned</div></a></li>
+                    <li data-type="qr_code"        class="token-item" data-memo-placeholder="QR code underneath Simon's phone batter"><a href="#" class="icon icon-qrcode"><span class="title">QR code</span><div class="explanation">Generate a QR code for physical tokens</div></a></li>
+                    <li data-type="my_sql"         class="token-item" data-memo-placeholder="MySQL token in payments_db_dump.sql on SRV01"><a href="#" class="icon icon-mysql"><span class="title">MySQL dump</span><div class="explanation">Get alerted when a MySQL dump is loaded</div></a></li>
+                    <li data-type="windows_dir"    class="token-item" data-memo-placeholder="Directory token placed in U:\Users\Sarah\CreditCardReports\"><a href="#" class="icon icon-folder"><span class="title">Windows folder</span><div class="explanation">Be notified when a Windows Folder is browsed in Windows Explorer</div></a></li>
+                    <li data-type="log4shell"      class="token-item" data-memo-placeholder="Placewhere log line is inserted"><a href="#" class="icon icon-log4shell"><span class="title">Log4Shell</span><div class="explanation">Alert when a log4j log line is vulnerable to CVE-2021-44228</div></a></li>
+                    <li data-type="fast_redirect"  class="token-item" data-memo-placeholder="URL within Dropbox"><a href="#" class="icon icon-redirect"><span class="title">Fast redirect</span><div class="explanation">Alert when a URL is visited, User is redirected</div></a></li>
+                    <li data-type="slow_redirect"  class="token-item" data-memo-placeholder="URL within Dropbox"><a href="#" class="icon icon-redirect"><span class="title">Slow redirect</span><div class="explanation">Alert when a URL is visited, User is redirected (More info is grabbed!)</div></a></li>
+                		<li data-type="web_image"      class="token-item" data-memo-placeholder="Image embedded in router X's admin interface"><a href="#" class="icon icon-web-image"><span class="title">Custom image web bug</span><div class="explanation">Alert when an image you uploaded is viewed</div></a></li>
+                    <li data-type="adobe_pdf"      class="token-item" data-memo-placeholder="PDF document placed at U:\Users\Sipho\Reports\feb.pdf"><a href="#" class="icon icon-pdf"><span class="title">Acrobat Reader PDF document</span><div class="explanation">Get alerted when a PDF document is opened in Acrobat Reader</div></a></li>
+                    <li data-type="signed_exe"     class="token-item" data-memo-placeholder="Tokened whoami.exe on web server WEB01"><a href="#" class="icon icon-exe"><span class="title">Custom exe / binary</span><div class="explanation">Fire an alert when an EXE or DLL is executed</div></a></li>
+                    <li data-type="sql_server"     class="token-item" data-memo-placeholder="SELECT SQL Server token on SQL01/CreditCards"><a href="#" class="icon icon-sqlserver"><span class="title">Microsoft SQL Server</span><div class="explanation">Get alerted when MS SQL Server databases are accessed</div></a></li>
+                    <li data-type="svn"            class="token-item" data-memo-placeholder="SVN token on REPO01/ourmainrepo"><a href="#" class="icon icon-svn"><span class="title">SVN</span><div class="explanation">Alert when someone checks out an SVN repository</div></a></li>
+                    <li data-type="smtp"           class="token-item" data-memo-placeholder="Email address in Events database"><a href="#" class="icon icon-email"><span class="title">Unique email address</span><div class="explanation">Alert when an email is sent to a unique address</div></a></li>
                   </ul>
                 </div>
               </div>
@@ -144,6 +162,12 @@
                 </div>
                 <div class="field-optional field-signed_exe hidden">
                   {{ fileupload('signed_exe', text="Click to select an EXE or DLL for tokening") }}
+                </div>
+                <div class="field-optional field-azure_id hidden">
+                  <input class="form-control" type="text" tabindex=3 name="azure_id_cert_file_name" placeholder="File Name of Azure ID Certificate, like: Code_Sign_Server_3.pem">
+                </div>
+                <div class="field-optional field-cmd hidden">
+                  <input class="form-control" type="text" tabindex=3 name="cmd_process" placeholder="Name of process to monitor (e.g. klist.exe)">
                 </div>
                 <div class="field-optional field-cloned_website hidden">
                   <input class="form-control" type="text" tabindex=3 name="clonedsite" placeholder="Domain of protected website (e.g. thinkst.com)">
@@ -189,7 +213,7 @@
             <div class="col-md-1">
             </div>
             <div class="col-md-10">
-              <img src="/resources/goodtick.png">
+              <img class="goodtick" src="/resources/canarytokens-done.png">
             </div>
             <div class="col-md-1">
             </div>
@@ -208,8 +232,8 @@
                 </div>
                 <div class="advice">
                   <p>Remember, it gets triggered whenever someone requests the URL.</p>
-                  <p>If the URL is requested as an image (e.g. &lt;img src=""&gt;) then a 1x1 image is served. If the URL is surfed in a browser than a blank page is served with fingerprinting Javascript.</p>
-                  <p>Ideas for use:
+                  <p>If the URL is requested as an image (e.g. &lt;img src=""&gt;) then a 1x1 image is served. If the URL is surfed in a browser then a blank page is served with fingerprinting Javascript.</p>
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>In an email with a juicy subject line.</li>
                       <li>Embedded in documents.</li>
@@ -229,7 +253,7 @@
                 </div>
                 <div class="advice">
                   <p>The token is similar to the Web token, however, when the link is loaded the view will be immediately redirected to the specified redirect URL.</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>Replace links with these to capture user information before user is redirected to where they want to go.</li>
                       <li>Embedded in documents.</li>
@@ -249,7 +273,7 @@
                 </div>
                 <div class="advice">
                   <p>The token is similar to the Fast Redirect token, however, when the link is loaded the user's browser / browser plugin information is captured.</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>Replace links with these to capture user information before user is redirected to where they want to go.</li>
                       <li>Embedded in documents.</li>
@@ -270,7 +294,7 @@
                 <div class="advice">
                   <p>Remember, it gets triggered whenever someone performs a DNS lookup of the hostname.</p>
                   <p>The source IP address shown in the alert is the <emph>DNS server</emph>, not the end user.</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>Include in a PTR entry for dark IP space of your internal network. Quick way to determine if someone is walking your internal DNS without configuring DNS logging and monitoring.</li>
                       <li>Leave in a .bash_history, or .ssh/config, or ~/servers.txt</li>
@@ -292,7 +316,7 @@
                 </div>
                 <div class="advice">
                   <p>Remember, it gets triggered whenever someone sends an email to the address.</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>In a database with a USERS table, drop a fake record in there with this email address. If it gets triggered you know someone has accessed your data.</li>
                     </ul>
@@ -309,7 +333,97 @@
                 <div class="advice">
                   <p>You'll get an alert whenever this document is opened in Microsoft Office, on Windows or Mac OS.</p>
                   <p>You can rename the document without affecting its operation.</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
+                    <ul>
+                      <li>Drop the file on a Windows network share.</li>
+                      <li>Leave the file on a web server in an inaccessible directory, to detect webserver breaches.</li>
+                      <li>Attach to an email with a tempting Subject line.</li>
+                    </ul>
+                  </p>
+                </div>
+              </div>
+              <div class="result cmd">
+                <h3>Your sensitive process execution token is active!</h3>
+                <div class="artifacts">
+                  <div class="form-control">
+                    <a class="btn btn-large btn-success file-download" data-fmt="cmd">Download your MS registry file</a>
+                  </div>
+                </div>
+                <div class="advice">
+                  <p>Once installed (with admin permissions) you'll get an alert whenever someone (or someone's code) runs your sensitive process. It will automatically provide the command used, computer the command ran on, and the user invoking the command.</p>
+                  <p><h5>Ideas for use:</h5>
+                    <ul>
+                      <li>Ideal candidates are executables often used by attackers but seldom used by regular users (e.g., whoami.exe, net.exe, wmic.exe, etc.).</li>
+                      <li>You can use this for attacker tools that are not present on your system (e.g., mimikatz.exe), and if they are ever downloaded and run you'll get an alert!</li>
+                      <li>Use a network management tool to deploy across your organization.</li>
+                    </ul>
+                  </p>
+                </div>
+              </div>
+              <div class="result cc">
+                <h3>Your credit card token is active!</h3>
+                <br>
+                <div class="artifacts">
+                  <div class="form-control" style="padding: 20px;">
+                    <div class="credit-card">
+                      <div id="ccRender">
+
+                      </div>
+                      <div class="copy-card">
+                        <span class="card-detail">
+                          <button class="btn-clipboard tooltip hide-button" data-clipboard-target="#copy-name"></button>
+                          <div>
+                            <span class="title">Name:</span>
+                            <span id="copy-name"></span>
+                          </div>
+                        </span>
+                        <span class="card-detail">
+                          <button class="btn-clipboard tooltip hide-button" data-clipboard-target="#copy-card"></button>
+                          <div>
+                            <span class="title">Card Number:</span>
+                            <span id="copy-card"></span>
+                          </div>
+                        </span>
+                        <span class="card-detail">
+                          <button class="btn-clipboard tooltip hide-button" data-clipboard-target="#copy-expiry"></button>
+                          <div>
+                            <span class="title">Expiration Date:</span>
+                            <span id="copy-expiry"></span>
+                          </div>
+                        </span>
+                        <span class="card-detail">
+                          <button class="btn-clipboard tooltip hide-button" data-clipboard-target="#copy-cvc"></button>
+                          <div>
+                            <span class="title">Security Code:</span>
+                            <span id="copy-cvc"></span></div>
+                        </span>
+                      </div>
+                    </div>
+                    <a class="btn btn-large btn-success file-download" data-fmt="cc">Download your credit card data</a>
+                  </div>
+                </div>
+                <div class="advice">
+                  <p>If the card number is ever used in an authorization, the transaction will be declined, but you will be alerted.</p>
+                  <p><h5>Ideas for use:</h5>
+                    <ul>
+                      <li>Stick this in a database that stores payment information and get alerted if it is ever breached.</li>
+                      <li>You can use any name or address in association with the card number and CVC.</li>
+                      <li>Put it in a document with other personal information regarding e.g., travel preferences in case someone snoops around your computer.</li>
+                    </ul>
+                  </p>
+                </div>
+              </div>
+              <div class="result ms_excel">
+                <h3>Your MS Excel token is active!</h3>
+                <div class="artifacts">
+                  <div class="form-control">
+                    <a class="btn btn-large btn-success file-download" data-fmt="msexcel">Download your MS Excel file</a>
+                  </div>
+                </div>
+                <div class="advice">
+                  <p>You'll get an alert whenever this document is opened in Microsoft Office, on Windows or Mac OS.</p>
+                  <p>You can rename the document without affecting its operation.</p>
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>Drop the file on a Windows network share.</li>
                       <li>Leave the file on a web server in an inaccessible directory, to detect webserver breaches.</li>
@@ -328,7 +442,7 @@
                 <div class="advice">
                   <p>You'll get an alert whenever this document is opened with Acrobat Reader, regardless of the user's security preferences in Reader.</p>
                   <p>You can rename the document without affecting its operation.</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>Drop the file on a Windows network share.</li>
                       <li>Leave the file on a web server in an inaccessible directory, to detect webserver breaches.</li>
@@ -347,7 +461,7 @@
                 <div class="advice">
                   <p>Unzip this file in a folder, and get notified when someone browses the folder in Windows Explorer. It will even trigger if someone is browsing the folder via a network share!</p>
                   <p>The alert will include the network domain and username of the browsing user, if present.<p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>Unzip the file on a juicely named Windows network share.</li>
                       <li>Unzip the file on your CEO's laptop on a folder on their Desktop.</li>
@@ -365,7 +479,7 @@
                 </div>
                 <div class="advice">
                   <p>Remember, this token is triggered whenever the binary file is executed. For EXEs, this means direct execution and for DLLs, it means they were loaded.</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>Decide on a few default binaries commonly used by attackers, and token them.</li>
                     </ul>
@@ -382,7 +496,7 @@
                 </div>
                 <div class="advice">
                   <p>When someone clones your site, they'll include the Javascript. When the Javascript is run it checks whether the domain is expected. If not, it fires the token and you get an alert.</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>Run the script through an <a href="https://www.google.com/search?q=JavaScript+Obfuscator">obfuscator</a> to make it harder to pick up.</li>
                       <li>Deploy on the login pages of your sensitive sites, such as OWA or tender systems.</li>
@@ -510,10 +624,63 @@
                 </div>
                 <div class="advice">
                   <p>When the actions are run, your Canarytoken will be triggered.</p>
-                  <p>Since DNS is used as the underlying transport, the Source IP will be that of a DNS server, not the databserver.</p>
-                  <p>Ideas for use:
+                  <p>Since DNS is used as the underlying transport, the Source IP will be that of a DNS server, not the database server.</p>
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>Deploy a SELECT token with a tempting VIEW name such as USER_DETAILS.</li>
+                    </ul>
+                  </p>
+                </div>
+              </div>
+              <div class="result my_sql">
+                <h3>Your MySQL token is active!</h3>
+                <div class="artifacts">
+                  <p>There are two ways you can use this token:</p>
+                  <p class="mysql-text">1.) Insert it into a MySQL dump of your own:</p>
+                  <div class="form-control">
+                    <div id="mysql-statement" class="pre-like">
+SET @b = '<span class="mysql-cmd"></span>';
+SET @s2 = FROM_BASE64(@b);
+PREPARE stmt1 FROM @s2;
+EXECUTE stmt1;
+PREPARE stmt2 FROM @bb;
+EXECUTE stmt2;
+START REPLICA;
+
+<button class="btn btn-success btn-clipboard tooltip" type="button" data-clipboard-target="#mysql-statement">
+  <img src="/resources/clippy.svg" alt="Copy to clipboard">
+</button>
+                    </div>
+                    <div id="mysql-statement-decoded" class="pre-like hidden">
+
+
+
+<span class="mysql-cmd-decoded"></span>
+PREPARE stmt FROM @bb;
+EXECUTE stmt;
+START REPLICA;
+
+<button class="btn btn-success btn-clipboard tooltip" type="button" data-clipboard-target="#mysql-statement-decoded">
+  <img src="/resources/clippy.svg" alt="Copy to clipboard">
+</button>
+                    </div>
+                  </div>
+                  <h4 style="margin-top: 10px;">OR</h4>
+                  <p class="mysql-text">2.) Download a (pseudo) random MySQL dump with a token already embedded in it</p>
+                  <div class="form-control">
+                    <a class="btn btn-large btn-success mysqldownload" data-fmt="my_sql">Download a MySQL Dump file</a>
+                  </div>
+                </div>
+                <div class="mysql-encoded-button">
+                  <input checked type="checkbox" id="mysql-encoded" name="mysql-encoded">
+                  <label for="mysql-encoded">Encode snippet to make it harder to spot</label><br>
+                </div>
+                <div class="advice">
+                  <p>When the MySQL statements are run, your Canarytoken will be triggered.</p>
+                  <p><h5>Ideas for use:</h5>
+                    <ul>
+                      <li>Attackers who find MySQL dump files will usually throw them into a temporary database to query the data.
+                        When a dump file with this snippet is ingested, it will let us know.</li>
                     </ul>
                   </p>
                 </div>
@@ -529,12 +696,37 @@
                 </div>
                 <div class="advice">
                   <p>When someone scans the QR Code with a reader, it will trigger the URL tied to your token and fire an alert.</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>On containers left in secure locations.</li>
                       <li>Underneath your phone battery when crossing international borders.</li>
                       <li>On your desk.</li>
                     </ul>
+                  </p>
+                </div>
+              </div>
+              <div class="result wireguard">
+                <h3>Your WireGuard VPN Config token is active!</h3>
+                <div class="artifacts">
+                  <p style="margin-bottom: 0px;">Scan this QR Code with the WireGuard app on your phone or copy the config below.</p>
+                  <div id="wireguard-app">
+                    <p>Don't have the WireGuard app?</p>
+                    <a href="https://apps.apple.com/us/app/wireguard/id1441195209?itsct=apps_box_badge&amp;itscg=30200" target="_blank">
+                      <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&amp;releaseDate=1545264000&amp;h=b15fc494302fdddf3af31ab97784d31d" alt="Download on the App Store">
+                    </a>
+                    <a href="https://play.google.com/store/apps/details?id=com.wireguard.android" target="_blank">
+                      <img class="play-img" alt="Get it on Google Play" src="/resources/google-play.png">
+                    </a>
+                  </div>
+                  <div class="form-control">
+                  <img id="wg_qrcode" />
+                   <pre id="wg_conf">
+                  </pre>
+                  </div>
+                </div>
+                <div class="advice">
+                  <p>Whenever someone tries to use this WireGuard VPN config to see what access it gets them, an alert is triggered.</p>
+                  <p>This WireGuard config can be installed anywhere WireGuard is used, such as on phones, laptops and servers.<p>
                   </p>
                 </div>
               </div>
@@ -550,7 +742,7 @@
                   <p>Remember, it gets triggered whenever someone clones the SVN repo.</p>
                   <p>Don't forget to run <pre>svn commit</pre> after you've added the token.</p>
                   <p>The source IP address shown in the alert is the <emph>DNS server</emph>, not the end user.</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>Token a dummy SVN repo to detect when attackers are enumerating repos.</li>
                       <li>Token an old repo which shouldn't be touched any longer.</li>
@@ -571,9 +763,9 @@
                 </div>
                 <div class="advice">
                   <p>This canarytoken is triggered when someone uses this credential pair to access AWS programmatically (through the API).</p>
-                  <p>The key is hyper unique. i.e. There is 0 chance of somebody having guessed these credentials.</p>
+                  <p>The key is unique. i.e. There is no chance of somebody guessing these credentials.</p>
                   <p>If this token fires, it is a clear indication that this set of keys has "leaked".</p>
-                  <p>Ideas for use:
+                  <p><h5>Ideas for use:</h5>
                     <ul>
                       <li>These credentials are often stored in a file called ~/.aws/credentials on linux/OSX systems. Generate a fake credential pair for your senior developers
                         and sysadmins and keep it on their machines. If someone tries to access AWS with the pair you generated for Bob, chances are that Bob's been compromised.</li>
@@ -582,27 +774,57 @@
                   </p>
                 </div>
               </div>
-              <div class="result slack_api">
-                <h3>Your Slack API key token is active!</h3>
+              <div class="result azure_id">
+                <h3>Your Azure Service Principal Login is active!</h3>
                 <div class="artifacts">
-                  <p>Copy this credential to your clipboard to use as desired:</p>
+                  <p>Save this json config file along with the certificate:</p>
                   <div class="form-control">
-                    {{ textareacopy('result_slack_api') }}
+                    {{ textareacopydownload('result_azure_id', 'azure_id_config') }}
                   </div>
                   <div class="form-control">
-                    <a class="btn btn-large btn-success file-download" data-fmt="slackapi">Download your Slack API key</a>
+                    <a class="btn btn-large btn-success file-download" data-fmt="azure_id">Download Azure Certificate</a>
                   </div>
                 </div>
                 <div class="advice">
-                  <p>This canarytoken is triggered when someone uses this credential to access Slack (through the Web API for example).</p>
-                  <p>If this token fires, it is a clear indication that this Slack API key has been "leaked".</p>
+                  <p>This canarytoken is triggered when someone uses this Service Principal Login to access Azure programmatically (through the API).</p>
+                  <p>The Service Principal Login is unique. i.e. There is no chance of somebody guessing these credentials.</p>
+                  <p>If this token fires, it is a clear indication that this Service Principal Login has "leaked".</p>
                   <p>Ideas for use:
                     <ul>
-                      <li>These Slack API keys are often stored in files on Linux/OSX systems (such as developer machines) or in code repositories. Generate a fake Slack API key for your senior developers
-                        and sysadmins and keep it on their machines. If someone tries to access this Slack workspace using the Slack API key you generated for Monica, chances are that Monica's been compromised.</li>
-                      <li>Place the credentials in private code repositories. If the token is triggered, it means that someone is accessing that repo without permission.</li>
+                      <li>Most systems have a ~/.azure folder (much like the ~/.aws or ~/.ssh). Create a config file with the config details from the token and place it
+                        near the certificate (ensuring that the config value has a path to the certificate).</li>
+                      <li>Place the credentials in private code repositories. If the token is triggered, it means that someone is accessing that repo without permission</li>
                     </ul>
                   </p>
+                </div>
+              </div>
+              <div class="result kubeconfig">
+                <h3>Your Kubeconfig Token is active!</h3>
+                <div class="artifacts">
+                  <div class="form-control">
+                    <a class="btn btn-large btn-success file-download" data-fmt="kubeconfig">Download your tokened Kubeconfig file</a>
+                  </div>
+                </div>
+                <div class="advice">
+                  <p>You'll get an alert when someone tries to use your Kubeconfig.</p>
+                  <p><h5>Ideas for use:</h5>
+                    <ul>
+                      <li>Place the file at ~/.kube/config on a host, tempting an attacker to use it.</li>
+                      <li>Place the file in private code repositories. If the token is triggered, it means that someone is accessing that repo without permission.</li>
+                    </ul>
+                  </p>
+                </div>
+              </div>
+              <div class="result log4shell">
+                <h3>Your log4shell token is active!</h3>
+                <div class="artifacts">
+                  <p>The next step is to copy the log4j snippet below and test your systems for the log4shell issue.</p>
+                  {{ inputcopy('result_log4shell') }}
+                </div>
+                <div class="advice">
+                  <p>If the log line is consumed by a vulnerable log4j library, it will generate an alert on this token.</p>
+                  <p>If this works, you will also obtain the hostname of the vulnerable server.</p>
+                  <p>You can read more on this issue at <a href="https://www.lunasec.io/docs/blog/log4j-zero-day/">LunaSec</a></p>
                 </div>
               </div>
             </div>
@@ -614,9 +836,13 @@
 
 
       <footer class="footer">
-        <p>Brought to you by <a href="https://canary.tools/" target="_blank">Thinkst Canary</a>, our insanely easy-to-use honeypot solution that deploys in just four minutes. <strong>Know. When it matters.</strong></p>
-        <p>&copy; <a href="https://thinkst.com" target="_blank">Thinkst Applied Research</a> 2015&ndash;{{now.year}}</p>
-        <p id="mainsite" class="hidden">This <a href="https://canarytokens.org/">Canarytokens</a> installation is unaffiliated with Thinkst Applied Research.</p>
+        <a href="http://canary.tools/why" target="_blank" class="banner"></a>
+        <p>Read Our <a href="https://docs.canarytokens.org/guide/" target="_blank">Canarytokens Documentation</a></p>
+        <p>By Using This Service, You Agree to Our <a href="/legal">Terms of Use.</a></p>
+        <p id="mainsite" class="hidden">This <a href="https://canarytokens.org/">Canarytokens</a> installation is unaffiliated with Thinkst Canary.</p>
+        {% if settings.DEV_BUILD_ID %}
+        <p>Build ID: {{ settings.DEV_BUILD_ID }}</p>
+        {%endif%}
       </footer>
 
     </div> <!-- /container -->
@@ -632,6 +858,19 @@
     <script src="/resources/site.js"></script>
     <script src="/resources/perfect-scrollbar.min.js"></script>
     <script>
+      // Search through the tokens dropdown by token name
+      var input = document.getElementById('search-token');
+      input.onkeyup = function () {
+          var filter = input.value.toUpperCase();
+          var tokens = document.getElementsByClassName('token-item');
+          for (var i = 0; i < tokens.length; i++) {
+              var token = tokens[i].getElementsByClassName('title')[0].innerHTML;
+              if (token.toUpperCase().includes(filter))
+                  tokens[i].style.display = 'list-item';
+              else
+                  tokens[i].style.display = 'none';
+          }
+      }
       Array.prototype.random = function () {
         return this[Math.floor((Math.random()*this.length))];
       }
@@ -734,6 +973,28 @@
         return cloned_website.removeClass('error-outline').addClass('success-outline');
       }
 
+      var checkCmd= function() {
+        cmd = $('input[name=cmd_process]');
+        if (! cmd.parents('.field-cmd').hasClass('hidden')) {
+          //only perform checks if field is visible. could be multiple checks
+          if (cmd.val().length == 0) {
+            return cmd.addClass('error-outline').removeClass('success-outline');
+          }
+        }
+        return cmd.removeClass('error-outline').addClass('success-outline');
+      }
+
+      var checkAzureIdCertName= function() {
+        azure_id_cert_file_name = $('input[name=azure_id_cert_file_name]');
+        if (! azure_id_cert_file_name.parents('.field-azure_id').hasClass('hidden')) {
+          //only perform checks if field is visible. could be multiple checks
+          if (azure_id_cert_file_name.val().length == 0) {
+            return azure_id_cert_file_name.addClass('error-outline').removeClass('success-outline');
+          }
+        }
+        return azure_id_cert_file_name.removeClass('error-outline').addClass('success-outline');
+      }
+
       var _checkSQLServerSelectedAction = function() {
         sql_server_selected_action = $('#selected_sql_action');
 
@@ -807,6 +1068,8 @@
         checkWebImage();
         checkSignedExe();
         checkClonedWebsite();
+        checkCmd();
+        checkAzureIdCertName();
         checkSQLServer();
 
         //invert UI elements, depending on whether there are errors or not
@@ -846,7 +1109,9 @@
               var obj = this;
 
               obj.dd.on('click', function(event){
-                  $(this).toggleClass('active');
+                  if (event.target.type !== 'search') {
+                    $(this).toggleClass('active');
+                  }
                   if ($(event.target).parents().hasClass('dropdown') && obj.click_cb) {
                     obj.click_cb(event);
                   }
@@ -859,6 +1124,10 @@
 		    var dd = new DropDown( $('#type'),
                                 function(event) {
                                   var list_item = $(event.target).parents('li');
+                                  if (!list_item.data('type')) {
+                                    event.preventDefault()
+                                    return;
+                                  }
                                   $('#dropdown').data('selected', list_item.data('type'))
                                   $('#selected_token').text(list_item.find('span.title').text());
                                   ToggleOptionalFields(list_item.data('type'));
@@ -956,6 +1225,23 @@
           $('#result_dns').val(data['Hostname']);
         };
 
+        var _handleCCResponse = function(data) {
+          let exp = data['expiration'].split('/')
+          let month = exp[0]
+          let year = exp[1]
+          month = month.length === 2 ? month : `0${month}`
+          year = year.substr(-2)
+          $('#copy-name').text(data['name'])
+          $('#copy-card').text(data['number'])
+          $('#copy-expiry').text(`${month}/${year}`)
+          $('#copy-cvc').text(data['cvc'])
+          $('#ccRender').html(data['rendered_html'])
+          $('a.file-download').each(function (i, e){
+            e = $(e);
+            e.prop('href', 'download?fmt='+e.data('fmt')+'&token='+data['Token']+'&auth='+data['Auth']);
+          });
+        };
+
         var _handleAWSKeysResponse = function(data){
           $('#result_aws_keys').val('[default]'+
           '\naws_access_key_id = '+ data['aws_access_key_id']+
@@ -969,10 +1255,24 @@
           });
         }
 
-        var _handleSlackApiResponse = function(data) {
-          $('#result_slack_api').val('# Slack API key'+
-          '\nslack_api_key = '+ data['slack_api_key']);
-          $('#result_slack_api').css('height','60px').css('text-align','left').css('width','90%');
+        var _handleAzureIDResponse = function(data){
+          const token_config_obj = {
+            appId: data['app_id'],
+            displayName: 'azure-cli-'+data['cert_name'],
+            fileWithCertAndPrivateKey: data['cert_file_name'],
+            password: null,
+            tenant: data['tenant_id'],
+          };
+          const token_config_JSON = JSON.stringify(token_config_obj, null, 2);
+          $('#result_azure_id').val(token_config_JSON);
+          $('#result_azure_id').css('height','160px').css('text-align','left').css('width','90%').css('font-size','.75rem');
+          $('a.file-download').each(function (i, e){
+            e = $(e);
+            e.prop('href', 'download?fmt='+e.data('fmt')+'&token='+data['Token']+'&auth='+data['Auth']);
+          });
+        }
+
+        var _handleKubeconfigResponse = function(data) {
           $('a.file-download').each(function (i, e){
             e = $(e);
             e.prop('href', 'download?fmt='+e.data('fmt')+'&token='+data['Token']+'&auth='+data['Auth']);
@@ -1005,6 +1305,10 @@
           $('#qrcode_png').siblings('a').prop('download', data['Token']+'.png');
           $('#qrcode_png').prop('src', data['qrcode_png']);
         }
+        var _handleWireGuardResponse = function(data) {
+          $('#wg_qrcode').prop('src', data['qr_code']);
+          $('#wg_conf').text(data['wg_conf']);
+        }
         var _handleSVNResponse = function(data){
           $('#result_svn').val('svn propset svn:externals "extras http://'+data['Hostname']+'" .')
         }
@@ -1028,10 +1332,27 @@
             $('.sql_action').text($('#selected_sql_action').text())
           }
         }
+        var _handleMySQLResponse = function(data) {
+          var cmd = `SET @bb = CONCAT(\"CHANGE MASTER TO MASTER_PASSWORD='my-secret-pw', MASTER_RETRY_COUNT=1, MASTER_PORT=3306, MASTER_HOST='${data['Hostname']}', MASTER_USER='${data['Token']}\", @@lc_time_names, @@hostname, \"';\");`
+
+          $('.mysql-cmd').text(btoa(cmd));
+          $('.mysql-cmd-decoded').text(cmd);
+
+          $(".mysqldownload").click(function() {
+            var token = data['Token'];
+            var encodedEl = $("#mysql-encoded");
+            var encoded = encodedEl.is(":checked");
+
+            window.open('download?fmt=my_sql&token=' + token + '&auth=' +data['Auth'] + '&encoded=' + encoded, '_blank').focus();
+          });
+        }
         var _handlerSignedExeResponse = function(data) {
           $('#signed_exe').prop('href', data['file_contents']);
           $('#signed_exe').prop('download', data['file_name']);
           $('#signed_exe').text('Save ' + data['file_name']);
+        }
+        var _handlerLog4ShellResponse = function(data) {
+          $('#result_log4shell').val('${jndi:ldap://x${hostName}.L4J.'+data['Hostname']+'/a}');
         }
         var _handleDefaultRequest = function(form) {
           return new FormData(form[0]);
@@ -1047,8 +1368,12 @@
         var _responseCallbacks = {'web': _handleWebResponse,
                                   'dns': _handleDNSResponse,
                                   'aws_keys':_handleAWSKeysResponse,
+                                  'azure_id':_handleAzureIDResponse,
                                   'web_image': _handleWebResponse,
                                   'ms_word' : _handleFileDownloadResponse,
+                                  'ms_excel' : _handleFileDownloadResponse,
+                                  'cmd': _handleFileDownloadResponse,
+                                  'cc': _handleCCResponse,
                                   'adobe_pdf' : _handleFileDownloadResponse,
                                   'windows_dir' : _handleFileDownloadResponse,
                                   'cloned_website' : _handleClonedWebsiteResponse,
@@ -1056,11 +1381,14 @@
                                   'svn': _handleSVNResponse,
                                   'smtp': _handleSMTPResponse,
                                   'sql_server': _handleSQLServerResponse,
+                                  'my_sql': _handleMySQLResponse,
                                   'signed_exe': _handlerSignedExeResponse,
                                   'fast_redirect': _handleFastRedirectResponse,
                                   'slow_redirect': _handleSlowRedirectResponse,
-                                  'default':   _handleDefaultResponse,
-                                  'slack_api': _handleSlackApiResponse
+                                  'kubeconfig': _handleKubeconfigResponse,
+                                  'wireguard': _handleWireGuardResponse,
+                                  'log4shell': _handlerLog4ShellResponse,
+                                  'default':   _handleDefaultResponse
                                  };
 
         function processForm( e ){
@@ -1112,15 +1440,23 @@
                           $('#memo_errors').show();
                           $('textarea[name=memo]').addClass('error-outline').removeClass('success-outline');
                       } else if (data['Error'] == '3'){
-                          $('#endpoints_errors').html('<p>Invalid webhook supplied, confirm you can POST to this URL with:</p><p><pre>curl -H "Content-Type: application/json" -d \'{"":""}\' URL</pre></p>');
+                          $('#endpoints_errors').html('<p>Invalid webhook supplied, confirm you can POST to this URL with:</p><p><pre>curl -H "Content-Type: application/json" -d \'{"text":"test"}\' URL</pre></p>');
                           $('#endpoints_errors').show();
                           $('#endpoints').addClass('error-outline').removeClass('success-outline');
                       } else if (data['Error'] == '4'){
                           $('#file_upload_errors').html(data['Message']);
                           $('.fileupload-wrapper').addClass('error-outline').removeClass('success-outline');
                           $('#file_upload_errors').show();
+                      } else if (data['Error'] == '5'){
+                          $('#endpoints_errors').html('<p>Invalid email supplied.</p>');
+                          $('#endpoints_errors').show();
+                          $('#endpoints').addClass('error-outline').removeClass('success-outline');
+                      } else if (data['Error'] == '6'){
+                          $('#endpoints_errors').html('<p>Blocked email supplied. <br>Please see our <a href="/legal">Acceptable Use Policy</a>.</p>');
+                          $('#endpoints_errors').show();
+                          $('#endpoints').addClass('error-outline').removeClass('success-outline');
                       } else {
-                          $('#memo_errors').html('An unexpected error occured');
+                          $('#memo_errors').html('An unexpected error occurred');
                           $('#memo_errors').show();
                           $('textarea[name=memo]').addClass('error-outline').removeClass('success-outline');
                       }
@@ -1138,8 +1474,6 @@
                         cb =_responseCallbacks['default'];
                       }
                       cb(data)
-
-                      $('.jumbotron').css('height', $('.success').innerHeight())
 
                       $('a.manage-link').prop('href', '/manage?token='+data['Token']+'&auth='+data['Auth']);
                       $('nav').removeClass('hidden');
@@ -1162,6 +1496,18 @@
         }
         $('#createForm').submit( processForm );
   	  });
+
+      $("#mysql-encoded").click(function() {
+        var elem = $("#mysql-encoded");
+
+        if (elem.is(":checked")) {
+          $('#mysql-statement').removeClass("hidden");
+          $('#mysql-statement-decoded').addClass("hidden");
+        } else {
+          $('#mysql-statement-decoded').removeClass("hidden");
+          $('#mysql-statement').addClass("hidden");
+        }
+      });
     </script>
   </body>
 </html>

@@ -119,6 +119,30 @@
                                         <td style="border: 1px solid #cccccc; padding: 5px;"><code>{{ BasicDetails['Location'] | e}}</code></td>
                                       </tr>
                       {% endif %}
+                      {% if BasicDetails['Log4JComputerName'] %}
+                                      <tr>
+                                        <td class="label" style="background: #eeeeee; font-weight: bold; _border: none; width: 180px; border: 1px solid #cccccc; padding: 5px;">Log4Shell Hostname</td>
+                                        <td style="border: 1px solid #cccccc; padding: 5px;"><code>{{ BasicDetails['Log4JComputerName'] | e}}</code></td>
+                                      </tr>
+                      {% endif %}
+                      {% if BasicDetails['CMDInformation'] %}
+                                      <tr>
+                                        <td class="label" style="background: #eeeeee; font-weight: bold; _border: none; width: 180px; border: 1px solid #cccccc; padding: 5px;">Sensitive Command Information</td>
+                                        <td style="border: 1px solid #cccccc; padding: 5px;"><code>{{ BasicDetails['CMDInformation'] | e}}</code></td>
+                                      </tr>
+                      {% endif %}
+                      {% if BasicDetails['Merchant'] %}
+                                      <tr>
+                                        <td class="label" style="background: #eeeeee; font-weight: bold; _border: none; width: 180px; border: 1px solid #cccccc; padding: 5px;">Authorizing merchant</td>
+                                        <td style="border: 1px solid #cccccc; padding: 5px;"><code>{{ BasicDetails['Merchant'] | e}}</code></td>
+                                      </tr>
+                      {% endif %}
+                      {% if BasicDetails['Amount'] %}
+                                      <tr>
+                                        <td class="label" style="background: #eeeeee; font-weight: bold; _border: none; width: 180px; border: 1px solid #cccccc; padding: 5px;">Transaction amount</td>
+                                        <td style="border: 1px solid #cccccc; padding: 5px;"><code>{{ BasicDetails['Amount'] | e}}</code></td>
+                                      </tr>
+                      {% endif %}
                       {% if BasicDetails['CanaryIP'] or BasicDetails['CanaryName'] %}
                                       <tr>
                                         <td class="label" style="background: #eeeeee; font-weight: bold; _border: none; width: 180px; border: 1px solid #cccccc; padding: 5px;">Canary</td>
@@ -130,7 +154,14 @@
                                             ){%endif%}
                                           </code></td>
                                       </tr>
-		       {% endif %}
+                      {% endif %}
+                      {% if BasicDetails['GenericData'] %}
+                                     <tr>
+                                        <td class="label" style="background: #eeeeee; font-weight: bold; _border: none; width: 180px; border: 1px solid #cccccc; padding: 5px;">Generic Data</td>
+                                        <td style="border: 1px solid #cccccc; padding: 5px;"><code>{{ BasicDetails['GenericData'] | e}}</code></td>
+                                      </tr>
+                      {% endif %}
+
 		       {% if BasicDetails.get('CanaryLocation', '') %}
                                       <tr>
                                         <td class="label" style="background: #eeeeee; font-weight: bold; _border: none; width: 180px; border: 1px solid #cccccc; padding: 5px;">Canary Location</td>
@@ -191,7 +222,7 @@
                   </td>
                 </tr>
               </table>
-              <a href="http://canarytokens.com" style="text-align: center"><img alt="Canary" width="100%" src="http://thinkst.com/images/tokens-banner.gif", _external=True)/></a>
+              <a href="https://canary.tools" target="_blank" style="text-align: center; background-image: url('https://thinkst.com/images/thinkst-canary-banner-hi-res-2.png'); height: 200px; width: 100%; display: block; background-repeat: no-repeat; background-size: contain; margin-top: 15px;"></a>
             </td>
           </tr>
         </table>

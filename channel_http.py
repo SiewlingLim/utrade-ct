@@ -1,3 +1,4 @@
+import re
 import simplejson
 import datetime
 import os
@@ -48,7 +49,11 @@ class CanarytokenPage(resource.Resource, InputChannel):
         print 'in render_GET'
         request.setHeader("Server", "Apache")
         try:
-            token = Canarytoken(value=request.path)
+            manage_uris = ['/generate', '/download?', '/history?', '/manage?', '/resources/', '/settings']
+            if any([request.path.find(x) == 0 for x in manage_uris]):
+                token = Canarytoken(value=request.path)
+            else:
+                token = Canarytoken(value=request.uri)
             canarydrop = Canarydrop(**get_canarydrop(canarytoken=token.value()))
             if request.args.get('ts_key',[None])[0]:
                 canarydrop._drop['hit_time'] = request.args.get('ts_key', [None])[0]
@@ -60,6 +65,12 @@ class CanarytokenPage(resource.Resource, InputChannel):
             #location and refere are for cloned sites
             location  = request.args.get('l', [None])[0]
             referer   = request.args.get('r', [None])[0]
+            flatten_singletons = lambda l: l[0] if len(l) == 1 else l
+            request_headers = {
+                k.decode(): flatten_singletons([s.decode() for s in v])
+                for k, v in request.requestHeaders.getAllRawHeaders()
+            }
+        	request_args = {k: ','.join(v) for k, v in request.args.iteritems()}
             print 'showing requrst args'
             for k,v in request.args.iteritems():
                 print k
@@ -76,10 +87,13 @@ class CanarytokenPage(resource.Resource, InputChannel):
             #log.info(request.getRemotePort())
             #log.info(request.getLocalPort())
             #log.info(request.getServerPort())
-
-            self.dispatch(canarydrop=canarydrop, src_ip=src_ip,src_port =src_port,
+			if canarydrop['type'] == 'cc':
+                self.dispatch(canarydrop=canarydrop, last4=request.getHeader('Last4'), amount='$'+request.getHeader('Amount'), merchant=request.getHeader('Merchant'))
+            else:
+            	self.dispatch(canarydrop=canarydrop, src_ip=src_ip,src_port =src_port,
                           useragent=useragent, location=location,
-                          referer=referer)
+                          referer=referer, request_headers=request_headers,
+                            request_args=request_args)
 
             if 'redirect_url' in canarydrop._drop and canarydrop._drop['redirect_url']:
                 # if fast redirect
@@ -143,8 +157,54 @@ class CanarytokenPage(resource.Resource, InputChannel):
                 canarydrop._drop['hit_time'] = datetime.datetime.utcnow().strftime("%s.%f")
                 useragent = request.args.get('user_agent', [None])[0]
                 src_ip    = request.args.get('ip', [None])[0]
+				safety_net = request.args.get('safety_net', [None])[0]
+				last_used  = request.args.get('last_used', [None])[0]           
                 additional_info = {'AWS Key Log Data': {k:v for k,v in request.args.iteritems() if k not in ['user_agent', 'ip']}}
+
+                if safety_net:
+                    log.info('AWS Safety Net triggered for {}'.format(token.value()))
+
                 self.dispatch(canarydrop=canarydrop, src_ip=src_ip, useragent=useragent, additional_info=additional_info)
+                return self.GIF
+
+            if canarydrop._drop['type'] == 'azure_id':
+                canarydrop._drop['hit_time'] = datetime.datetime.utcnow().strftime("%s.%f")
+
+                json_data = simplejson.loads(request.content.read())
+                src_ip = json_data.get('ip','127.0.0.1')
+
+                auth_details = json_data.get('auth_details', '')
+                if type(auth_details) == list:
+                    out = ''
+                    for d in auth_details:
+                        out += "\n{}: {}".format(d['key'], d['value'])
+                    auth_details = out
+
+                location_details = json_data.get('location', {})
+                geo_details = location_details.get('geoCoordinates', {})
+
+                additional_info = {}
+                additional_info["Azure ID Log Data"] = {
+                    "Date": [json_data.get('time','Not Available')],
+                    "Authentication": [auth_details],
+                }
+                additional_info["Microsoft Azure"] = {
+                    "Resource": [json_data.get('resource','Not Available')],
+                    "App ID": [json_data.get('app_id','Not Available')],
+                    "Cert ID": [json_data.get('cert_id','Not Available')],
+                }
+                additional_info["Location"] = {
+                    "city": [location_details.get('city','Not Available')],
+                    "state": [location_details.get('state','Not Available')],
+                    "countryOrRegion": [location_details.get('countryOrRegion','Not Available')],
+                }
+                additional_info["Coordinates"] = {
+                    "latitude": [geo_details.get('latitude','Not Available')],
+                    "longitude": [geo_details.get('longitude','Not Available')],
+                }
+
+                self.dispatch(canarydrop=canarydrop, src_ip=src_ip, additional_info=additional_info)
+
                 return self.GIF
 
             key = request.args['key'][0]
@@ -193,7 +253,7 @@ class CanarytokenPage(resource.Resource, InputChannel):
                         log.error('Error in secretkeeper_photo post: {error}'.format(error=e))
                 else:
                     additional_info = {k:v for k,v in request.args.iteritems() if k not in ['key','canarytoken','name']}
-                    canarydrop.add_additional_info_to_hit(hit_time=key,additional_info={request.args['name'][0]:additional_info})
+                    canarydrop.add_additional_info_to_hit(hit_time=key, additional_info={request.args['name'][0]:additional_info})
                 return 'success'
             else:
                 return self.render_GET(request)
@@ -213,6 +273,8 @@ class CanarytokenPage(resource.Resource, InputChannel):
             additional_report += '\nCloned site is at: {location}'.format(location=kwargs['location'])
         if kwargs.has_key('referer') and kwargs['referer']:
             additional_report += '\nReferring site: {referer}'.format(referer=kwargs['referer'])
+		if kwargs.has_key('request_headers') and kwargs['request_headers']:
+            additional_report += '\nAdditional header info: {0}'.format(kwargs['request_headers'])
         return additional_report
 
     def init(self, switchboard=None):

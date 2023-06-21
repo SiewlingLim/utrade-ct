@@ -1,4 +1,5 @@
 from twisted.internet import reactor, defer
+from twisted.internet.task import deferLater
 from twisted.names import dns, server, error
 from twisted.logger import Logger
 log = Logger()
@@ -6,14 +7,16 @@ log = Logger()
 from constants import INPUT_CHANNEL_DNS
 from tokens import Canarytoken
 from canarydrop import Canarydrop
-from exception import NoCanarytokenPresent, NoCanarytokenFound
+from exception import NoCanarytokenPresent, NoCanarytokenFound, IncompleteRequest, DuplicateDNSRequest
 from channel import InputChannel
 from queries import get_canarydrop, get_all_canary_domains
+from redismanager import db, KEY_CACHED_DNS_REQUEST
 
 import settings
 import math
 import base64
 import re
+from exceptions import UnicodeDecodeError
 
 class DNSServerFactory(server.DNSServerFactory, object):
     def handleQuery(self, message, protocol, address):
@@ -29,7 +32,12 @@ class DNSServerFactory(server.DNSServerFactory, object):
         else:
             src_ip = protocol.transport.socket.getpeername()[0]
 
-        log.info('Query: {} sent {}'.format(src_ip, query))
+        try:
+            log.info('Query: {} sent {}'.format(src_ip, query))
+        except UnicodeDecodeError:
+            # Invalid query
+            return None
+
         return self.resolver.query(query, src_ip).addCallback(
             self.gotResolverResponse, protocol, message, address
         ).addErrback(
@@ -126,6 +134,17 @@ class ChannelDNS(InputChannel):
         data = {}
         data['mysql_username'] = base64.b32decode(username.replace('.','').replace('-','=').upper())
         return data
+    
+    def _cmd_data(self, computer_name=None, user_name=None):
+        data = {}
+        data['cmd_computer_name'] = 'Not Obtained'
+        data['cmd_user_name'] = 'Not Obtained'
+        if user_name and user_name != '':
+            data['cmd_user_name'] = user_name[1:]
+        if computer_name and computer_name != '':
+            data['cmd_computer_name'] = computer_name[1:]
+        return data
+
 
     def _linux_inotify_data(self, filename=None):
         data = {}
@@ -204,6 +223,15 @@ class ChannelDNS(InputChannel):
         data['windows_desktopini_access_domain'] = domain
         return data
 
+    def _log4_shell(self, computer_name=None):
+        data = {}
+        if len(computer_name) <= 1:
+            computer_name = 'Not Obtained'
+        else:
+            computer_name = computer_name[1:]
+        data['log4_shell_computer_name'] = computer_name
+        return data
+
     def look_for_source_data(self, token=None, value=None):
         try:
             value = value.lower()
@@ -215,6 +243,8 @@ class ChannelDNS(InputChannel):
             dtrace_process       = re.compile('([0-9]+)\.([A-Za-z0-9-=]+)\.h\.([A-Za-z0-9.-=]+)\.c\.([A-Za-z0-9.-=]+)\.D1\.', re.IGNORECASE)
             dtrace_file_open     = re.compile('([0-9]+)\.([A-Za-z0-9-=]+)\.h\.([A-Za-z0-9.-=]+)\.f\.([A-Za-z0-9.-=]+)\.D2\.', re.IGNORECASE)
             desktop_ini_browsing = re.compile('([^\.]+)\.([^\.]+)\.?([^\.]*)\.ini\.', re.IGNORECASE)
+            log4_shell           = re.compile('([A-Za-z0-9.-]*)\.L4J\.', re.IGNORECASE)
+            cmd_computername     = re.compile('(.+)\.UN\.(.+)\.CMD\.', re.IGNORECASE)
 
             m = desktop_ini_browsing.match(value)
             if m:
@@ -247,6 +277,14 @@ class ChannelDNS(InputChannel):
             if m:
                 return self._dtrace_file_open(uid=m.group(2), hostname=m.group(3), filename=m.group(4))
 
+            m = log4_shell.match(value)
+            if m:
+                return self._log4_shell(computer_name=m.group(1))
+            
+            m = cmd_computername.match(value)
+            if m:
+                return self._cmd_data(computer_name=m.group(1), user_name=m.group(2))
+
         except Exception as e:
             log.error(e)
         return {}
@@ -278,11 +316,31 @@ class ChannelDNS(InputChannel):
 
             canarydrop = Canarydrop(**get_canarydrop(canarytoken=token.value()))
 
+            if canarydrop._drop['type'] == 'cmd':
+                query_cmp = query.name.name.lower()
+                cmd_regex = re.compile('(.+)\.UN\.(.+)\.CMD\.', re.IGNORECASE)
+                valid = cmd_regex.match(query_cmp)
+
+                # Ignore incomplete sensitive cmd requests
+                if not valid:
+                    raise IncompleteRequest('Incomplete request for sensitive cmd token')
+
+                # Ignore duplicate requests
+                cached_key = KEY_CACHED_DNS_REQUEST + query_cmp
+                if db.exists(cached_key):
+                    log.debug('Ignoring duplicate DNS request')
+                    raise DuplicateDNSRequest('Duplicate request for sensitive cmd token')
+                db.setex(cached_key, settings.CACHED_DNS_REQUEST_PERIOD, True)
+
             src_data = self.look_for_source_data(token=token.value(), value=query.name.name)
 
-            self.dispatch(canarydrop=canarydrop, src_ip=src_ip, src_data=src_data)
+            if canarydrop._drop['type'] == 'my_sql':
+                d = deferLater(reactor, 10, self.dispatch, canarydrop=canarydrop, src_ip=src_ip, src_data=src_data)
+                d.addErrback(self._handleMySqlErr)
+            else:
+                self.dispatch(canarydrop=canarydrop, src_ip=src_ip, src_data=src_data)
 
-        except (NoCanarytokenPresent, NoCanarytokenFound):
+        except (NoCanarytokenPresent, NoCanarytokenFound, DuplicateDNSRequest, IncompleteRequest):
             # If we dont find a canarytoken, lets just continue. No need to log.
             pass
         except Exception as e:
@@ -356,4 +414,15 @@ class ChannelDNS(InputChannel):
                 additional_report += '\nAWS Keys used by: {ip}'\
                     .format(ip=kwargs['src_data']['aws_keys_event_source_ip'])
 
+            if 'log4_shell_computer_name' in kwargs['src_data']:
+                additional_report += '\nComputer name from Log4J shell: {computer_name}'\
+                    .format(computer_name=kwargs['src_data']['log4_shell_computer_name'])
+            
+            if 'cmd_computer_name' in kwargs['src_data'] and 'cmd_user_name' in kwargs['src_data']:
+                additional_report += '\nCommand execution on {computer_name} by {user_name}'\
+                    .format(computer_name=kwargs['src_data']['cmd_computer_name'], user_name=kwargs['src_data']['cmd_user_name'])
+
         return additional_report
+
+    def _handleMySqlErr(self, result):
+        log.error("Error dispatching MySQL alert: {}".format(result))

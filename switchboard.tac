@@ -20,6 +20,9 @@ from channel_input_imgur import ChannelImgur
 from channel_input_linkedin import ChannelLinkedIn
 from channel_input_bitcoin import ChannelBitcoin
 from channel_input_smtp import ChannelSMTP
+from channel_input_mtls import ChannelKubeConfig
+from channel_input_mysql import ChannelMySQL
+from channel_input_wireguard import ChannelWireGuard
 from channel_output_email import EmailOutputChannel
 from channel_output_twilio import TwilioOutputChannel
 from channel_output_webhook import WebhookOutputChannel
@@ -76,6 +79,16 @@ canarytokens_smtp = ChannelSMTP(port=settings.CHANNEL_SMTP_PORT,
                                  switchboard=switchboard)
 canarytokens_smtp.service.setServiceParent(application)
 
+canarytokens_kubeconfig=ChannelKubeConfig(port=settings.CHANNEL_MTLS_KUBECONFIG_PORT, ip=settings.PUBLIC_IP,
+                                switchboard=switchboard)
+canarytokens_kubeconfig.service.setServiceParent(application)
+
+canarytokens_mysql = ChannelMySQL(port=settings.CHANNEL_MYSQL_PORT,
+                                 switchboard=switchboard)
+canarytokens_mysql.service.setServiceParent(application)
+
+canarytokens_wireguard = ChannelWireGuard(switchboard=switchboard)
+canarytokens_wireguard.service.setServiceParent(application)
 
 #loop to update tor exit nodes every 30 min
 loop_http = internet.task.LoopingCall(update_tor_exit_nodes_loop)
