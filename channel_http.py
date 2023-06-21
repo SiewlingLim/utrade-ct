@@ -61,11 +61,19 @@ class CanarytokenPage(resource.Resource, InputChannel):
             useragent = request.getHeader('User-Agent')
             src_ip    = request.getHeader('x-forwarded-for')
             src_port  = request.getHeader('whatever')
+            log.info('useragent')
+            log.info(useragent)
+            log.info('src_ip')
             log.info(src_ip)
+            log.info('src_port')
             log.info(src_port)
             #location and refere are for cloned sites
             location  = request.args.get('l', [None])[0]
             referer   = request.args.get('r', [None])[0]
+            log.info('location')
+            log.info(location)
+            log.info('referer')
+            log.info(referer)
             flatten_singletons = lambda l: l[0] if len(l) == 1 else l
             request_headers = {
                 k.decode(): flatten_singletons([s.decode() for s in v])
