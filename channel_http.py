@@ -45,7 +45,7 @@ class CanarytokenPage(resource.Resource, InputChannel):
         # 2. Otherwise we'll serve an image:
         #  2a. If a custom image is attached to the canarydrop, serve that and stop.
         #  2b. Serve our default 1x1 gif
-    
+        print('in render_GET-http')
         request.setHeader("Server", "Apache")
         try:
             manage_uris = ['/generate', '/download?', '/history?', '/manage?', '/resources/', '/settings']
@@ -70,9 +70,16 @@ class CanarytokenPage(resource.Resource, InputChannel):
                 for k, v in request.requestHeaders.getAllRawHeaders()
             }
             request_args = {k: ','.join(v) for k, v in request.args.iteritems()}
+            print 'printing arg'
             for k,v in request.args.iteritems():
                 print k
                 print v
+            log.info(useragent)
+            log.info(location)
+            log.info(referer)
+            log.info(request.getRemotePort())
+            log.info(request.getLocalPort())
+            log.info(request.getServerPort())
             if canarydrop['type'] == 'cc':
                 self.dispatch(canarydrop=canarydrop, last4=request.getHeader('Last4'), amount='$'+request.getHeader('Amount'), merchant=request.getHeader('Merchant'))
             else:
