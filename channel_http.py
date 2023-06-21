@@ -48,11 +48,12 @@ class CanarytokenPage(resource.Resource, InputChannel):
         print('in render_GET-http')
         request.setHeader("Server", "Apache")
         try:
-            manage_uris = ['/generate', '/download?', '/history?', '/manage?', '/resources/', '/settings']
-            if any([request.path.find(x) == 0 for x in manage_uris]):
-                token = Canarytoken(value=request.path)
-            else:
-                token = Canarytoken(value=request.uri)
+            token = Canarytoken(value=request.path)
+            #manage_uris = ['/generate', '/download?', '/history?', '/manage?', '/resources/', '/settings']
+            #if any([request.path.find(x) == 0 for x in manage_uris]):
+            #   token = Canarytoken(value=request.path)
+            #else:
+            #    token = Canarytoken(value=request.uri)
             canarydrop = Canarydrop(**get_canarydrop(canarytoken=token.value()))
             if request.args.get('ts_key',[None])[0]:
                 canarydrop._drop['hit_time'] = request.args.get('ts_key', [None])[0]
